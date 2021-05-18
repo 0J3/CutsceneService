@@ -1,7 +1,7 @@
-local module = require(game.ReplicatedStorage.CutsceneService)
+local module = require(game:GetService("ReplicatedStorage").Common.CutsceneService)
 local func = module.Functions
 local buttons = script.Parent:WaitForChild("Buttons")
-local char = game.Players.LocalPlayer.Character
+local char = game:GetService("Players").LocalPlayer.Character
 
 local cutscene1 = module:Create(workspace.Cutscene1, 10,
 	Enum.EasingStyle.Quart, Enum.EasingDirection.InOut, func.StartFromCurrentCamera, func.EndWithDefaultCamera, func.DisableControls)

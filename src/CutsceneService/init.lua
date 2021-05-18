@@ -1,3 +1,4 @@
+--!nocheck
 --[[
 
 Tutorial & Documentation: devforum.roblox.com/t/718571
@@ -6,19 +7,22 @@ Version of this module: 1.1.0
 
 Created by Vaschex
 
-Rojo Support added by 0J3_0
+Rojo Support, aswell as usage of KIIS, added by 0J3_0
 
 ]]
 
+local KIIS = require(script.KIIS)
+
 local module = {}
-local plr = game.Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local plr = game:GetService("Players").LocalPlayer
 local char = plr.Character
 local controls = require(plr.PlayerScripts.PlayerModule):GetControls()
 local easingFunctions = require(script.EasingFunctions)
 local rootPart = char:WaitForChild("HumanoidRootPart")
 local runService = game:GetService("RunService")
-local StarterGui = game.StarterGui
-local camera = workspace.CurrentCamera
+local StarterGui = game:GetService("StarterGui")
+local camera = Workspace.CurrentCamera
 local clock = os.clock
 local playing = false
 
@@ -29,46 +33,61 @@ Signal.ClassName = "Signal"
 function Signal.new()
 	local self = setmetatable({}, Signal)
 
-	self._bindableEvent = Instance.new("BindableEvent")
-	self._argData = nil
-	self._argCount = nil -- Prevent edge case of :Fire("A", nil) --> "A" instead of "A", nil
+	self._argData = nil;
+	self._argCount = nil; -- Prevent edge case of :Fire("A", nil) --> "A" instead of "A", nil
 
-	return self
-end
+	self._KIISBindable = KIIS.new();
+
+	return self;
+end;
 
 function Signal:Fire(...)
-	self._argData = {...}
-	self._argCount = select("#", ...)
-	self._bindableEvent:Fire()
-	self._argData = nil
-	self._argCount = nil
-end
+	self._argData = {...};
+	self._argCount = select("#", ...);
+	self._KIISBindable:Fire();
+	self._argData = nil;
+	self._argCount = nil;
+end;
 
 function Signal:Connect(handler)
 	if not (type(handler) == "function") then
-		error(("connect(%s)"):format(typeof(handler)), 2)
-	end
+		error(("connect(%s)"):format(typeof(handler)), 2);
+	end;
 
-	return self._bindableEvent.Event:Connect(function()
-		handler(unpack(self._argData, 1, self._argCount))
-	end)
-end
+	return self._KIISBindable:Connect(function()
+		handler(unpack(self._argData, 1, self._argCount));
+	end);
+end;
 
 function Signal:Wait()
-	self._bindableEvent.Event:Wait()
-	assert(self._argData, "Missing arg data, likely due to :TweenSize/Position corrupting threadrefs.")
-	return unpack(self._argData, 1, self._argCount)
-end
+	-- Because KIIS does not support using :Wait(), we use a "Vanilla" bindableevent here.
+	if not self._bindableEvent then -- If there is not vanilla bindableevent, ...
+		self._bindableEvent = Instance.new("BindableEvent"); -- ... Create the bindableevent
+		
+		self._KIISBindable:Connect(function() -- ... And make it so when KIISBindable fires, the vanilla one fires
+			if self._bindableEvent then
+				self._bindableEvent:Fire();
+			end;
+		end);
+	end;
+	self._bindableEvent.Event:Wait(); -- Wait for the bindable to get fired
+	assert(self._argData, "Missing arg data, likely due to :TweenSize/Position corrupting threadrefs.");
+	return unpack(self._argData, 1, self._argCount);
+end;
 
 function Signal:Destroy()
 	if self._bindableEvent then
-		self._bindableEvent:Destroy()
-		self._bindableEvent = nil
-	end
+		self._bindableEvent:Destroy();
+		-- self._bindableEvent = nil -- :Destroy() sets the object to nil, so we don't need to manually set it to nil
+	end;
 
-	self._argData = nil
-	self._argCount = nil
-end
+	if self._KIISBindable and self._KIISBindable.Destroy and not self._KIISBindable.Destroyed then -- checks for .Destroy because an older version of KIIS doesn't have it
+		self._KIISBindable:Destroy();
+	end;
+
+	self._argData = nil;
+	self._argCount = nil;
+end;
 
 local function getPoints(folder) --returns point cframes in order
 	folder = folder:GetChildren()

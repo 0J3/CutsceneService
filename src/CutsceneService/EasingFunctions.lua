@@ -1,3 +1,5 @@
+--!nocheck
+
 -- From: https://github.com/EmmanuelOga/easing
 
 -- Info: https://developer.roblox.com/en-us/api-reference/enum/EasingStyle
