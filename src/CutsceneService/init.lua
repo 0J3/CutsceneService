@@ -3,7 +3,7 @@
 
 Tutorial & Documentation: devforum.roblox.com/t/718571
 
-Version of this module: 1.1.0
+Version of this module: 1.2.0
 
 Created by Vaschex
 
